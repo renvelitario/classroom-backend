@@ -4,8 +4,8 @@ import { relations } from "drizzle-orm/relations";
 // Reusable timestamp fields for all tables
 // Automatically sets created_at on insert and updated_at on update
 const timestamps = {
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().$onUpdate(() => new Date()).notNull(),
 }
 
 // Departments table definition
