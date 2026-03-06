@@ -3,10 +3,16 @@ import subjectsRouter from './routes/subjects';
 import cors from 'cors';
 
 const app = express();
-const PORT = 8000;
+const PORT = Number(process.env.PORT) || 8000
+
+
+const FRONTEND_URL = process.env.FRONTEND_URL;
+if (!FRONTEND_URL && process.env.NODE_ENV === 'production') {
+  throw new Error('FRONTEND_URL is required in production');
+}
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: FRONTEND_URL ?? 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
