@@ -10,28 +10,39 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const { search, department, page = 1, limit = 10 } = req.query;
+    const firstString = (v: unknown): string | undefined =>
+      typeof v === "string" ? v : Array.isArray(v) && typeof v[0] === "string" ? v[0] : undefined;
 
-    const currentPage = Math.max(1, +page)
-    const limitPerPage = Math.max(1, +limit)
+    const toPositiveInt = (v: unknown, fallback: number, max?: number): number => {
+      const n = Number(firstString(v) ?? v);
+      if (!Number.isFinite(n) || n < 1) return fallback;
+      const int = Math.floor(n);
+      return max ? Math.min(int, max) : int;
+    };
+
+    const currentPage = toPositiveInt(page, 1);
+    const limitPerPage = toPositiveInt(limit, 10, 100);
+    const searchTerm = firstString(search);
+    const departmentTerm = firstString(department);
 
     const offset = (currentPage - 1) * limitPerPage;
 
     const filterConditions = []
 
     // If search query exists, filter by subject name or code
-    if (search) {
+    if (searchTerm) {
       filterConditions.push(
         or(
-          ilike(subjects.name, `%${search}%`),
-          ilike(subjects.code, `%${search}%`)
+          ilike(subjects.name, `%${searchTerm}%`),
+          ilike(subjects.code, `%${searchTerm}%`)
         )
       );
     }
 
     // If department filter exists, match department name
-    if (department) {
+    if (departmentTerm) {
       filterConditions.push(
-        ilike(departments.name, `%${department}%`)
+        ilike(departments.name, `%${departmentTerm}%`)
       );
     }
 
