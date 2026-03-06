@@ -29,5 +29,13 @@
     "drizzle-kit": "^0.31.9",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/renvelitario/classroom-backend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/renvelitario/classroom-backend/issues"
+  },
+  "homepage": "https://github.com/renvelitario/classroom-backend#readme"
 }
