@@ -35,7 +35,7 @@ const securityMiddleware = async (req: Request, res: Response, next: NextFunctio
         interval: 60,
         max: limit,
       })
-    ) as any; // cast to any to allow .protect()
+    ) as any;
 
     const arcjetRequest: ArcjetNodeRequest = {
       headers: req.headers,
