@@ -1,69 +1,89 @@
-import type { Request, Response, NextFunction } from 'express';
-import { ArcjetNodeRequest, slidingWindow } from '@arcjet/node';
-import aj from '../config/arcjet';
+import { slidingWindow } from "@arcjet/node";
+import type { ArcjetNodeRequest } from "@arcjet/node";
+import type { NextFunction, Request, Response } from "express";
 
-type RateLimitRole = 'admin' | 'teacher' | 'student' | 'guest';
+import aj from "../config/arcjet.js";
 
-const securityMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-  if (process.env.NODE_ENV === 'test') return next();
-
-  let limit = 2;
-  let message = 'Guest request limit exceeded (2 per min.).';
+const securityMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  // If NODE_ENV is TEST, skip security middleware
+  if (process.env.NODE_ENV === "test") {
+    return next();
+  }
 
   try {
-    const role: RateLimitRole = req.user?.role ?? 'guest';
+    const role: RateLimitRole = req.user?.role ?? "guest";
 
-    // Override default values based on role
+    let limit: number;
+    let message: string;
+
     switch (role) {
-      case 'admin':
+      case "admin":
         limit = 20;
-        message = 'Admin request limit exceeded (20 per min.). Slow down.';
+        message = "Admin request limit exceeded (20 per minute). Slow down!";
         break;
-      case 'teacher':
+      case "teacher":
+      case "student":
         limit = 10;
-        message = 'Teacher request limit exceeded (10 per min.). Please wait.';
+        message = "User request limit exceeded (10 per minute). Please wait.";
         break;
-      case 'student':
+      default:
         limit = 5;
-        message = 'Student request limit exceeded (5 per min.). Please sign up for higher limits';
+        message =
+          "Guest request limit exceeded (5 per minute). Please sign up for higher limits.";
         break;
     }
 
     const client = aj.withRule(
       slidingWindow({
-        mode: 'LIVE',
-        interval: 60,
+        mode: "LIVE",
+        interval: "1m",
         max: limit,
       })
-    ) as any;
+    );
 
     const arcjetRequest: ArcjetNodeRequest = {
       headers: req.headers,
       method: req.method,
       url: req.originalUrl ?? req.url,
-      socket: { remoteAddress: req.socket.remoteAddress ?? req.ip ?? '0.0.0.0' },
+      socket: {
+        remoteAddress: req.socket.remoteAddress ?? req.ip ?? "0.0.0.0",
+      },
     };
 
     const decision = await client.protect(arcjetRequest);
 
     if (decision.isDenied() && decision.reason.isBot()) {
-      return res.status(403).json({ error: 'Forbidden', message });
+      return res.status(403).json({
+        error: "Forbidden",
+        message: "Automated requests are not allowed",
+      });
     }
 
     if (decision.isDenied() && decision.reason.isShield()) {
-      return res.status(403).json({ error: 'Forbidden', message: 'Request blocked by security shield' });
+      return res.status(403).json({
+        error: "Forbidden",
+        message: "Request blocked by security policy",
+      });
     }
 
     if (decision.isDenied() && decision.reason.isRateLimit()) {
-      return res.status(429).json({ error: 'Too many requests', message });
+      return res.status(429).json({
+        error: "Too Many Requests",
+        message,
+      });
     }
 
     next();
-  } catch (e) {
-    console.error('Arcjet middleware error:', e);
-
-    // Use the role message as a fallback
-    return res.status(500).json({ error: 'Internal server error', message });
+  } catch (error) {
+    console.error("Arcjet middleware error:", error);
+    res.status(500).json({
+      error: "Internal Server Error",
+      message: "Something went wrong with the security middleware.",
+    });
   }
 };
 
