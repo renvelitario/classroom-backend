@@ -8,6 +8,13 @@
       "when": 1772791832454,
       "tag": "0000_pink_quicksilver",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773049520060,
+      "tag": "0001_cold_champions",
+      "breakpoints": true
     }
   ]
 }
