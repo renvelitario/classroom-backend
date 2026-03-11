@@ -1,4 +1,4 @@
-import express, { json } from "express";
+import express from "express";
 import { departments, subjects } from "../db/schema/index.js";
 import { ilike, or, and, eq } from "drizzle-orm/sql/expressions/conditions";
 import { sql } from "drizzle-orm/sql/sql";

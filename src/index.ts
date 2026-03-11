@@ -9,7 +9,7 @@ import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth.js";
 
 const app = express();
-const PORT = Number(process.env.PORT) || 8000;
+const PORT = 8000;
 
 const FRONTEND_URL = process.env.FRONTEND_URL;
 if (!FRONTEND_URL && process.env.NODE_ENV === "production") {
