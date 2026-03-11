@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db } from "../db";
-import * as schema from "../db/schema";
+import { db } from "../db/index.js";
+import * as schema from "../db/schema/auth.js";
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET!,
@@ -26,6 +26,6 @@ export const auth = betterAuth({
         required: false,
         input: true,
       },
-    }
-  }
+    },
+  },
 });

@@ -1,7 +1,8 @@
 import express, { json } from "express";
-import { departments, subjects } from "../db/schema";
-import { ilike, or, and, eq } from "drizzle-orm/sql/expressions/conditions"; import { sql } from "drizzle-orm/sql/sql";
-import { db } from "../db";
+import { departments, subjects } from "../db/schema/index.js";
+import { ilike, or, and, eq } from "drizzle-orm/sql/expressions/conditions";
+import { sql } from "drizzle-orm/sql/sql";
+import { db } from "../db/index.js";
 import { desc, getTableColumns } from "drizzle-orm";
 
 const router = express.Router();
@@ -11,9 +12,17 @@ router.get("/", async (req, res) => {
   try {
     const { search, department, page = 1, limit = 10 } = req.query;
     const firstString = (v: unknown): string | undefined =>
-      typeof v === "string" ? v : Array.isArray(v) && typeof v[0] === "string" ? v[0] : undefined;
+      typeof v === "string"
+        ? v
+        : Array.isArray(v) && typeof v[0] === "string"
+          ? v[0]
+          : undefined;
 
-    const toPositiveInt = (v: unknown, fallback: number, max?: number): number => {
+    const toPositiveInt = (
+      v: unknown,
+      fallback: number,
+      max?: number,
+    ): number => {
       const n = Number(firstString(v) ?? v);
       if (!Number.isFinite(n) || n < 1) return fallback;
       const int = Math.floor(n);
@@ -27,23 +36,21 @@ router.get("/", async (req, res) => {
 
     const offset = (currentPage - 1) * limitPerPage;
 
-    const filterConditions = []
+    const filterConditions = [];
 
     // If search query exists, filter by subject name or code
     if (searchTerm) {
       filterConditions.push(
         or(
           ilike(subjects.name, `%${searchTerm}%`),
-          ilike(subjects.code, `%${searchTerm}%`)
-        )
+          ilike(subjects.code, `%${searchTerm}%`),
+        ),
       );
     }
 
     // If department filter exists, match department name
     if (departmentTerm) {
-      filterConditions.push(
-        ilike(departments.name, `%${departmentTerm}%`)
-      );
+      filterConditions.push(ilike(departments.name, `%${departmentTerm}%`));
     }
 
     // Combine all filters using AND if any exist
@@ -61,7 +68,7 @@ router.get("/", async (req, res) => {
     const subjectList = await db
       .select({
         ...getTableColumns(subjects),
-        department: { ...getTableColumns(departments) }
+        department: { ...getTableColumns(departments) },
       })
       .from(subjects)
       .leftJoin(departments, eq(subjects.departmentId, departments.id))
@@ -76,10 +83,9 @@ router.get("/", async (req, res) => {
         page: currentPage,
         limit: limitPerPage,
         total: totalCount,
-        totalPages: Math.ceil(totalCount / limitPerPage)
-      }
+        totalPages: Math.ceil(totalCount / limitPerPage),
+      },
     });
-
   } catch (error) {
     console.error("Error fetching subjects:", error);
     res.status(500).json({ error: "Failed to fetch subjects" });
